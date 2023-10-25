@@ -155,8 +155,6 @@
                             -Amapstruct.defaultComponentModel=spring
                         </compilerArg>
                     </compilerArgs>
-                    <source>14</source>
-                    <target>14</target>
                 </configuration>
             </plugin>
         </plugins>
