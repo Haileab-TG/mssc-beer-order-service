@@ -1,9 +1,7 @@
 package guru.sfg.beer.order.service.web.mappers;
 
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
-import guru.sfg.beer.order.service.domain.BeerOrderLine.BeerOrderLineBuilder;
 import guru.sfg.beer.order.service.web.model.BeerOrderLineDto;
-import guru.sfg.beer.order.service.web.model.BeerOrderLineDto.BeerOrderLineDtoBuilder;
 import javax.annotation.processing.Generated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -11,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2023-10-25T16:16:14-0500",
-    comments = "version: 1.3.0.Final, compiler: javac, environment: Java 17.0.7 (Amazon.com Inc.)"
+    date = "2023-10-26T17:49:58-0500",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.7 (Amazon.com Inc.)"
 )
 @Component
 @Qualifier("delegate")
@@ -27,7 +25,7 @@ public class BeerOrderLineMapperImpl_ implements BeerOrderLineMapper {
             return null;
         }
 
-        BeerOrderLineDtoBuilder beerOrderLineDto = BeerOrderLineDto.builder();
+        BeerOrderLineDto.BeerOrderLineDtoBuilder beerOrderLineDto = BeerOrderLineDto.builder();
 
         beerOrderLineDto.id( line.getId() );
         if ( line.getVersion() != null ) {
@@ -48,7 +46,7 @@ public class BeerOrderLineMapperImpl_ implements BeerOrderLineMapper {
             return null;
         }
 
-        BeerOrderLineBuilder beerOrderLine = BeerOrderLine.builder();
+        BeerOrderLine.BeerOrderLineBuilder beerOrderLine = BeerOrderLine.builder();
 
         beerOrderLine.id( dto.getId() );
         if ( dto.getVersion() != null ) {
