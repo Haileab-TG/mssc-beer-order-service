@@ -2,6 +2,8 @@ package guru.sfg.beer.order.service.stateMachine;
 
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
+import guru.sfg.beer.order.service.stateMachine.action.SendValidateOrderRequestAction;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
@@ -10,9 +12,12 @@ import org.springframework.statemachine.config.builders.StateMachineTransitionCo
 
 import java.util.EnumSet;
 
+@RequiredArgsConstructor
 @EnableStateMachineFactory
 @Configuration
 public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
+    private final SendValidateOrderRequestAction sendValidateOrderRequestAction;
+
     @Override
     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
         states.withStates()
@@ -30,21 +35,44 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
     @Override
     public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
         transitions
-                .withExternal().source(OrderState.NEW).target(OrderState.PENDING_VALIDATION).event(OrderEvent.VALIDATE_ORDER)
+                .withExternal()
+                    .source(OrderState.NEW)
+                    .target(OrderState.PENDING_VALIDATION)
+                    .event(OrderEvent.VALIDATE_ORDER)
+                    .action(sendValidateOrderRequestAction)
                 .and()
-                .withExternal().source(OrderState.PENDING_VALIDATION).target(OrderState.VALIDATED).event(OrderEvent.VALIDATION_PASSED)
+                .withExternal()
+                    .source(OrderState.PENDING_VALIDATION)
+                    .target(OrderState.VALIDATED)
+                    .event(OrderEvent.VALIDATION_PASSED)
                 .and()
-                .withExternal().source(OrderState.PENDING_VALIDATION).target(OrderState.VALIDATION_EXCEPTION).event(OrderEvent.VALIDATION_FAILED)
+                .withExternal()
+                    .source(OrderState.PENDING_VALIDATION)
+                    .target(OrderState.VALIDATION_EXCEPTION)
+                    .event(OrderEvent.VALIDATION_FAILED)
                 .and()
 
-                .withExternal().source(OrderState.VALIDATED).target(OrderState.ALLOCATED).event(OrderEvent.ALLOCATION_SUCCESS)
+
+                .withExternal()
+                    .source(OrderState.VALIDATED)
+                    .target(OrderState.ALLOCATED)
+                    .event(OrderEvent.ALLOCATION_SUCCESS)
                 .and()
-                .withExternal().source(OrderState.VALIDATED).target(OrderState.PENDING_INVENTORY).event(OrderEvent.ALLOCATION_NO_INVENTORY)
+                .withExternal()
+                    .source(OrderState.VALIDATED)
+                    .target(OrderState.PENDING_INVENTORY)
+                    .event(OrderEvent.ALLOCATION_NO_INVENTORY)
                 .and()
-                .withExternal().source(OrderState.VALIDATED).target(OrderState.ALLOCATION_EXCEPTION).event(OrderEvent.ALLOCATION_FAILED)
+                .withExternal()
+                    .source(OrderState.VALIDATED)
+                    .target(OrderState.ALLOCATION_EXCEPTION)
+                    .event(OrderEvent.ALLOCATION_FAILED)
                 .and()
 
-                .withExternal().source(OrderState.ALLOCATED).target(OrderState.PICKED_UP).event(OrderEvent.ORDER_PICKED_UP);
+                .withExternal()
+                    .source(OrderState.ALLOCATED)
+                    .target(OrderState.PICKED_UP)
+                    .event(OrderEvent.ORDER_PICKED_UP);
 //                .and()
 //                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERY_EXCEPTION).event(OrderEvent.)
 //                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERED).event(OrderEvent.)

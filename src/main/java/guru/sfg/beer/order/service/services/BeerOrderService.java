@@ -18,7 +18,7 @@
 package guru.sfg.beer.order.service.services;
 
 
-import guru.sfg.beer.order.service.web.model.BeerOrderDto;
+import common.model.BeerOrderDto;
 import guru.sfg.beer.order.service.web.model.BeerOrderPagedList;
 import org.springframework.data.domain.Pageable;
 

@@ -17,6 +17,7 @@
 
 package guru.sfg.beer.order.service.web.model;
 
+import common.model.BaseItem;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
