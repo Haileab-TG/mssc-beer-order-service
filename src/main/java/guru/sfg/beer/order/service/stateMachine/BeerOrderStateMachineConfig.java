@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
+import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
 
 import java.util.EnumSet;
 
@@ -24,5 +25,28 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                 .end(OrderState.VALIDATION_EXCEPTION)
                 .end(OrderState.ALLOCATION_EXCEPTION)
                 .end(OrderState.DELIVERY_EXCEPTION);
+    }
+
+    @Override
+    public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
+        transitions
+                .withExternal().source(OrderState.NEW).target(OrderState.NEW).event(OrderEvent.VALIDATE_ORDER)
+                .and()
+                .withExternal().source(OrderState.NEW).target(OrderState.VALIDATED).event(OrderEvent.VALIDATION_PASSED)
+                .and()
+                .withExternal().source(OrderState.NEW).target(OrderState.VALIDATION_EXCEPTION).event(OrderEvent.VALIDATION_FAILED)
+                .and()
+
+                .withExternal().source(OrderState.VALIDATED).target(OrderState.ALLOCATED).event(OrderEvent.ALLOCATION_SUCCESS)
+                .and()
+                .withExternal().source(OrderState.VALIDATED).target(OrderState.PENDING_INVENTORY).event(OrderEvent.ALLOCATION_NO_INVENTORY)
+                .and()
+                .withExternal().source(OrderState.VALIDATED).target(OrderState.ALLOCATION_EXCEPTION).event(OrderEvent.ALLOCATION_FAILED)
+                .and()
+
+                .withExternal().source(OrderState.ALLOCATED).target(OrderState.PICKED_UP).event(OrderEvent.ORDER_PICKED_UP);
+//                .and()
+//                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERY_EXCEPTION).event(OrderEvent.)
+//                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERED).event(OrderEvent.)
     }
 }

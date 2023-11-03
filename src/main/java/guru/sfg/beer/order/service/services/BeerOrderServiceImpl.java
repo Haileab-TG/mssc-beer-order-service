@@ -84,7 +84,7 @@ public class BeerOrderServiceImpl implements BeerOrderService {
             BeerOrder beerOrder = beerOrderMapper.dtoToBeerOrder(beerOrderDto);
             beerOrder.setId(null); //should not be set by outside client
             beerOrder.setCustomer(customerOptional.get());
-            beerOrder.setOrderStatus(OrderState.NEW);
+            beerOrder.setOrderState(OrderState.NEW);
 
             beerOrder.getBeerOrderLines().forEach(line -> line.setBeerOrder(beerOrder));
 
@@ -109,7 +109,7 @@ public class BeerOrderServiceImpl implements BeerOrderService {
     @Override
     public void pickupOrder(UUID customerId, UUID orderId) {
         BeerOrder beerOrder = getOrder(customerId, orderId);
-        beerOrder.setOrderStatus(OrderState.PICKED_UP);
+        beerOrder.setOrderState(OrderState.PICKED_UP);
 
         beerOrderRepository.save(beerOrder);
     }
