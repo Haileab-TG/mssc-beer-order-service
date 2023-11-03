@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JmsConfig {
-    public static final String VALIDATE_ORDER_REQUEST_QUEUE = "validate-order";
+    public static final String VALIDATE_ORDER_REQUEST_QUEUE = "validate-order-request";
+    public static final String VALIDATE_ORDER_RESPONSE_QUEUE = "validate-order-response";
     @Bean
     public MessageConverter messageConverter(){
         MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter();
