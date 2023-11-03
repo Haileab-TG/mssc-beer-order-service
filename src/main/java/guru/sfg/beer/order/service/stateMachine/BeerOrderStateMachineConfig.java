@@ -30,11 +30,11 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
     @Override
     public void configure(StateMachineTransitionConfigurer<OrderState, OrderEvent> transitions) throws Exception {
         transitions
-                .withExternal().source(OrderState.NEW).target(OrderState.NEW).event(OrderEvent.VALIDATE_ORDER)
+                .withExternal().source(OrderState.NEW).target(OrderState.PENDING_VALIDATION).event(OrderEvent.VALIDATE_ORDER)
                 .and()
-                .withExternal().source(OrderState.NEW).target(OrderState.VALIDATED).event(OrderEvent.VALIDATION_PASSED)
+                .withExternal().source(OrderState.PENDING_VALIDATION).target(OrderState.VALIDATED).event(OrderEvent.VALIDATION_PASSED)
                 .and()
-                .withExternal().source(OrderState.NEW).target(OrderState.VALIDATION_EXCEPTION).event(OrderEvent.VALIDATION_FAILED)
+                .withExternal().source(OrderState.PENDING_VALIDATION).target(OrderState.VALIDATION_EXCEPTION).event(OrderEvent.VALIDATION_FAILED)
                 .and()
 
                 .withExternal().source(OrderState.VALIDATED).target(OrderState.ALLOCATED).event(OrderEvent.ALLOCATION_SUCCESS)
