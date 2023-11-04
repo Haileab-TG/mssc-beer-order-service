@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class ValidateBeerOrderRequestEvent extends BeerOrderEvent{
-    public ValidateBeerOrderRequestEvent(BeerOrderDto beerOrderDto) {
+public class ValidateOrderRequestEvent extends BeerOrderEvent{
+    public ValidateOrderRequestEvent(BeerOrderDto beerOrderDto) {
         super(beerOrderDto);
     }
 }

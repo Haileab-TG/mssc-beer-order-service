@@ -1,6 +1,6 @@
 package guru.sfg.beer.order.service.stateMachine.action;
 
-import common.event.ValidateBeerOrderRequestEvent;
+import common.event.ValidateOrderRequestEvent;
 import guru.sfg.beer.order.service.config.JmsConfig;
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
@@ -30,7 +30,7 @@ public class SendValidateOrderRequestAction implements Action<OrderState, OrderE
                     beerOrderRepository.findById(orderId).ifPresent(beerOrder -> {
                         jmsClient.convertAndSend(
                                 JmsConfig.VALIDATE_ORDER_REQUEST_QUEUE,
-                                new ValidateBeerOrderRequestEvent(beerOrderMapper.beerOrderToDto(beerOrder))
+                                new ValidateOrderRequestEvent(beerOrderMapper.beerOrderToDto(beerOrder))
                         );
                     });
                 });

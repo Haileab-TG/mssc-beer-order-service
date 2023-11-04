@@ -1,5 +1,6 @@
 package guru.sfg.beer.order.service.services;
 
+import common.model.BeerOrderDto;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
@@ -45,6 +46,19 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
                     BeerOrder beerOrderUpdatedState = beerOrderRepository.findOneById(beerOrder.getId());
                     sendOrderEvent(beerOrderUpdatedState, OrderEvent.ALLOCATE_ORDER);
                 });
+    }
+
+    @Override
+    public void processAllocationResult(BeerOrderDto beerOrderDto, boolean pendingInventory, boolean allocationError) {
+        OrderEvent event;
+        if(allocationError) event = OrderEvent.ALLOCATION_FAILED;
+        else if (pendingInventory) event = OrderEvent.ALLOCATION_NO_INVENTORY;
+        else event = OrderEvent.ALLOCATION_SUCCESS;
+
+        BeerOrder beerOrderOrNull = beerOrderRepository.findOneById(beerOrderDto.getId());
+        Optional.ofNullable(beerOrderOrNull)
+                .ifPresent(beerOrder -> sendOrderEvent(beerOrder, event));
+
     }
 
     private void sendOrderEvent(BeerOrder beerOrder, OrderEvent orderEvent) {
