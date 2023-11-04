@@ -1,0 +1,47 @@
+package guru.sfg.beer.order.service.stateMachine.action;
+
+import common.event.AllocateOrderRequestEvent;
+import guru.sfg.beer.order.service.config.JmsConfig;
+import guru.sfg.beer.order.service.domain.BeerOrder;
+import guru.sfg.beer.order.service.domain.OrderEvent;
+import guru.sfg.beer.order.service.domain.OrderState;
+import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
+import guru.sfg.beer.order.service.services.BeerOrderManagerImpl;
+import guru.sfg.beer.order.service.web.mappers.BeerOrderMapper;
+import lombok.RequiredArgsConstructor;
+import org.springframework.jms.core.JmsTemplate;
+import org.springframework.statemachine.StateContext;
+import org.springframework.statemachine.action.Action;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@RequiredArgsConstructor
+@Component
+public class SendAllocateOrderRequestAction implements Action<OrderState, OrderEvent> {
+    private final JmsTemplate jmsClient;
+    private final BeerOrderRepository beerOrderRepository;
+    private final BeerOrderMapper beerOrderMapper;
+    @Override
+    public void execute(StateContext<OrderState, OrderEvent> context) {
+        UUID orderIdOrNull = context.getMessageHeaders()
+                .get(BeerOrderManagerImpl.ORDER_ID_HEADER, UUID.class);
+        Optional.ofNullable(orderIdOrNull)
+                        .ifPresent(orderId -> {
+                            BeerOrder beerOrderOrNull = beerOrderRepository.findOneById(orderId);
+                            Optional.ofNullable(beerOrderOrNull)
+                                    .ifPresent(beerOrder -> {
+                                        jmsClient.convertAndSend(
+                                                JmsConfig.ALLOCATE_ORDER_REQUEST_QUEUE,
+                                                AllocateOrderRequestEvent.builder()
+                                                        .beerOrderDto(
+                                                                beerOrderMapper.beerOrderToDto(beerOrder)
+                                                        )
+                                                        .build()
+                                        );
+                                    });
+                        });
+
+    }
+}

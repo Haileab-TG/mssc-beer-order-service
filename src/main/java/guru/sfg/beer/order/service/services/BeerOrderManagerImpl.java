@@ -41,6 +41,9 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         Optional.ofNullable(beerOrderInDB)
                 .ifPresent(beerOrder -> {
                     sendOrderEvent(beerOrder, event);
+
+                    BeerOrder beerOrderUpdatedState = beerOrderRepository.findOneById(beerOrder.getId());
+                    sendOrderEvent(beerOrderUpdatedState, OrderEvent.ALLOCATE_ORDER);
                 });
     }
 

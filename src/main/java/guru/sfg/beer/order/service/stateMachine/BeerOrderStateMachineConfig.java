@@ -2,6 +2,7 @@ package guru.sfg.beer.order.service.stateMachine;
 
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
+import guru.sfg.beer.order.service.stateMachine.action.SendAllocateOrderRequestAction;
 import guru.sfg.beer.order.service.stateMachine.action.SendValidateOrderRequestAction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,7 @@ import java.util.EnumSet;
 @Configuration
 public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
     private final SendValidateOrderRequestAction sendValidateOrderRequestAction;
+    private final SendAllocateOrderRequestAction sendAllocateOrderRequestAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
@@ -55,16 +57,17 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
 
                 .withExternal()
                     .source(OrderState.VALIDATED)
-                    .target(OrderState.ALLOCATED)
-                    .event(OrderEvent.ALLOCATION_SUCCESS)
+                    .target(OrderState.PENDING_ALLOCATION)
+                    .event(OrderEvent.ALLOCATE_ORDER)
+                    .action(sendAllocateOrderRequestAction)
                 .and()
                 .withExternal()
-                    .source(OrderState.VALIDATED)
+                    .source(OrderState.PENDING_ALLOCATION)
                     .target(OrderState.PENDING_INVENTORY)
                     .event(OrderEvent.ALLOCATION_NO_INVENTORY)
                 .and()
                 .withExternal()
-                    .source(OrderState.VALIDATED)
+                    .source(OrderState.PENDING_ALLOCATION)
                     .target(OrderState.ALLOCATION_EXCEPTION)
                     .event(OrderEvent.ALLOCATION_FAILED)
                 .and()
