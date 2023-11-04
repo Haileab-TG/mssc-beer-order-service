@@ -4,6 +4,7 @@ import common.model.BeerOrderDto;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
+import guru.sfg.beer.order.service.repositories.BeerOrderLineRepository;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.stateMachine.BeerOrderStateMachineInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     private final BeerOrderRepository beerOrderRepository;
     private final StateMachineFactory<OrderState, OrderEvent> factory;
     private final BeerOrderStateMachineInterceptor beerOrderStateMachineInterceptor;
+    private final BeerOrderLineRepository beerOrderLineRepository;
 
     public final static String ORDER_ID_HEADER = "order-id";
 
@@ -52,13 +54,33 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     public void processAllocationResult(BeerOrderDto beerOrderDto, boolean pendingInventory, boolean allocationError) {
         OrderEvent event;
         if(allocationError) event = OrderEvent.ALLOCATION_FAILED;
-        else if (pendingInventory) event = OrderEvent.ALLOCATION_NO_INVENTORY;
-        else event = OrderEvent.ALLOCATION_SUCCESS;
+        else if (pendingInventory) {
+            event = OrderEvent.ALLOCATION_NO_INVENTORY;
+            updateOrderLineAllocatedQty(beerOrderDto);
+        }
+        else {
+            event = OrderEvent.ALLOCATION_SUCCESS;
+            updateOrderLineAllocatedQty(beerOrderDto);
+        };
 
         BeerOrder beerOrderOrNull = beerOrderRepository.findOneById(beerOrderDto.getId());
         Optional.ofNullable(beerOrderOrNull)
                 .ifPresent(beerOrder -> sendOrderEvent(beerOrder, event));
 
+    }
+
+    private void updateOrderLineAllocatedQty(BeerOrderDto beerOrderDto) {
+        beerOrderDto.getBeerOrderLines()
+                .forEach(beerOrderLineDto -> {
+                    beerOrderLineRepository
+                            .findById(beerOrderLineDto.getId())
+                            .ifPresent(beerOrderLine -> {
+                                beerOrderLine.setQuantityAllocated(
+                                        beerOrderLineDto.getQuantityAllocated()
+                                );
+                                beerOrderLineRepository.save(beerOrderLine);
+                            });
+                });
     }
 
     private void sendOrderEvent(BeerOrder beerOrder, OrderEvent orderEvent) {
