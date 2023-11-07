@@ -110,6 +110,32 @@ public class BeerOrderMangerImplIT {
 
     }
 
+    @Test
+    public void testValidationFailed() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
+                .upc("1234")
+                .build();
+        wireMockServer.stubFor(
+                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                        .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
+        );
+
+        BeerOrder newBeerOrder = createBeerOrder();
+        newBeerOrder.setCustomerRef("test-failed-validation"); // flag MQ that should fail
+
+        BeerOrder failedValidationOrder = beerOrderManager.newBeerOrder(newBeerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder beerOrderFound = beerOrderRepository.findById(failedValidationOrder.getId())
+                    .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+            assertEquals(OrderState.VALIDATION_EXCEPTION, beerOrderFound.getOrderState());
+        });
+
+        assertNotNull(failedValidationOrder);
+        assertEquals(OrderState.VALIDATION_EXCEPTION, failedValidationOrder.getOrderState());
+    }
+
 
 
     private BeerOrder createBeerOrder(){

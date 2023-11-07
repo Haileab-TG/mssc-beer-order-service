@@ -17,8 +17,12 @@ public class ValidateBeerOrderListener {
 
     @JmsListener(destination = JmsConfig.VALIDATE_ORDER_REQUEST_QUEUE)
     public void listener(ValidateOrderRequestEvent event){
+        String failedValidationTestFlag = event.getBeerOrderDto().getCustomerRef();
+        boolean isValid = failedValidationTestFlag == null ||
+                !failedValidationTestFlag.equals("test-failed-validation");
+
         ValidateOrderResultEvent response = ValidateOrderResultEvent.builder()
-                .isValid(true)
+                .isValid(isValid)
                 .orderId(event.getBeerOrderDto().getId())
                 .build();
 

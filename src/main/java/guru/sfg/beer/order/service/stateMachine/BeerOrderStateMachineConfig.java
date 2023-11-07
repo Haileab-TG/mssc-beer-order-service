@@ -2,6 +2,7 @@ package guru.sfg.beer.order.service.stateMachine;
 
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
+import guru.sfg.beer.order.service.stateMachine.action.FailedValidationCompensationAction;
 import guru.sfg.beer.order.service.stateMachine.action.SendAllocateOrderRequestAction;
 import guru.sfg.beer.order.service.stateMachine.action.SendValidateOrderRequestAction;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.EnumSet;
 public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<OrderState, OrderEvent> {
     private final SendValidateOrderRequestAction sendValidateOrderRequestAction;
     private final SendAllocateOrderRequestAction sendAllocateOrderRequestAction;
+    private final FailedValidationCompensationAction failedValidationCompensationAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
@@ -52,6 +54,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                     .source(OrderState.PENDING_VALIDATION)
                     .target(OrderState.VALIDATION_EXCEPTION)
                     .event(OrderEvent.VALIDATION_FAILED)
+                    .action(failedValidationCompensationAction)
                 .and()
 
 
