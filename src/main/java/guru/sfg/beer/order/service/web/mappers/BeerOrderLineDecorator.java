@@ -1,14 +1,14 @@
 package guru.sfg.beer.order.service.web.mappers;
 
+import common.model.BeerOrderLineDto;
 import guru.sfg.beer.order.service.RESTclient.beerService.BeerServiceRestTemplate;
 import guru.sfg.beer.order.service.RESTclient.beerService.model.BeerDTO;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
-import common.model.BeerOrderLineDto;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Optional;
-
+@Slf4j
 @Component
 public abstract class BeerOrderLineDecorator implements BeerOrderLineMapper{
     private BeerOrderLineMapper beerOrderLineMapper;
@@ -17,13 +17,9 @@ public abstract class BeerOrderLineDecorator implements BeerOrderLineMapper{
     @Override
     public BeerOrderLineDto beerOrderLineToDto(BeerOrderLine line) {
         BeerOrderLineDto beerOrderLineDto = beerOrderLineMapper.beerOrderLineToDto(line);
-        Optional<BeerDTO> beerDTOOptional = beerServiceRestTemplate.getBeerByUpc(beerOrderLineDto.getUpc());
-        beerDTOOptional.ifPresent(
-                beerDTO -> {
-                    beerOrderLineDto.setBeerName(beerDTO.getBeerName());
-                    beerOrderLineDto.setBeerId(beerDTO.getId());
-                }
-        );
+        BeerDTO beerDto = beerServiceRestTemplate.getBeerByUpc(beerOrderLineDto.getUpc());
+        beerOrderLineDto.setBeerName(beerDto.getBeerName());
+        beerOrderLineDto.setBeerId(beerDto.getId());
         return beerOrderLineDto;
     }
 

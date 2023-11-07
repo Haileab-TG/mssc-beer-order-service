@@ -7,7 +7,9 @@ import guru.sfg.beer.order.service.domain.OrderState;
 import guru.sfg.beer.order.service.repositories.BeerOrderLineRepository;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.stateMachine.BeerOrderStateMachineInterceptor;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class BeerOrderManagerImpl implements BeerOrderManager {
@@ -28,26 +31,28 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
 
     public final static String ORDER_ID_HEADER = "order-id";
 
+    @Transactional
     @Override
     public BeerOrder newBeerOrder(BeerOrder beerOrder) {
         beerOrder.setId(null); // just making user the db is initilizing id
         beerOrder.setOrderState(OrderState.NEW);
-        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+        BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
+        System.out.println("Beer Order ID saved " + beerOrder.getId());
         sendOrderEvent(savedBeerOrder, OrderEvent.VALIDATE_ORDER);
-        return null;
+        return savedBeerOrder;
     }
 
+    @Transactional
     @Override
     public void processValidationResult(UUID orderId, boolean isValid) {
-        BeerOrder beerOrderInDB = beerOrderRepository.findOneById(orderId);
+        Optional<BeerOrder> beerOrderInDB = beerOrderRepository.findById(orderId);
         OrderEvent event = isValid ? OrderEvent.VALIDATION_PASSED : OrderEvent.VALIDATION_FAILED;
-        Optional.ofNullable(beerOrderInDB)
-                .ifPresent(beerOrder -> {
+        beerOrderInDB
+                .ifPresentOrElse(beerOrder -> {
                     sendOrderEvent(beerOrder, event);
-
-                    BeerOrder beerOrderUpdatedState = beerOrderRepository.findOneById(beerOrder.getId());
+                    BeerOrder beerOrderUpdatedState = beerOrderRepository.findById(beerOrder.getId()).orElseThrow();
                     sendOrderEvent(beerOrderUpdatedState, OrderEvent.ALLOCATE_ORDER);
-                });
+                }, () -> log.error("BeerOrderManagerImpl : beerOrder with given Id Not found in DB for id " + orderId));
     }
 
     @Override
@@ -63,23 +68,23 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
             updateOrderLineAllocatedQty(beerOrderDto);
         };
 
-        BeerOrder beerOrderOrNull = beerOrderRepository.findOneById(beerOrderDto.getId());
-        Optional.ofNullable(beerOrderOrNull)
-                .ifPresent(beerOrder -> sendOrderEvent(beerOrder, event));
-
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderDto.getId());
+       beerOrderOptional
+                .ifPresentOrElse(
+                        beerOrder -> sendOrderEvent(beerOrder, event)
+                , () -> log.error("BeerOrder findById is empty : processAllocationResult - BeerOrderManagerImpl"));
     }
 
     private void updateOrderLineAllocatedQty(BeerOrderDto beerOrderDto) {
         beerOrderDto.getBeerOrderLines()
                 .forEach(beerOrderLineDto -> {
-                    beerOrderLineRepository
-                            .findById(beerOrderLineDto.getId())
-                            .ifPresent(beerOrderLine -> {
+                    beerOrderLineRepository.findById(beerOrderLineDto.getId())
+                            .ifPresentOrElse(beerOrderLine -> {
                                 beerOrderLine.setQuantityAllocated(
                                         beerOrderLineDto.getQuantityAllocated()
                                 );
                                 beerOrderLineRepository.save(beerOrderLine);
-                            });
+                            }, () -> log.error("BeerOrder findById is empty : updateOrderLineAllocatedQty - BeerOrderManagerImpl"));
                 });
     }
 
@@ -87,6 +92,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         StateMachine<OrderState, OrderEvent> sm = build(beerOrder);
         Message<OrderEvent> msg = buildMessage(orderEvent, beerOrder.getId());
         sm.sendEvent(msg);
+        log.debug("BeerOrderManagerImpl : state event sent " + msg.getPayload());
     }
 
     private Message<OrderEvent> buildMessage(OrderEvent orderEvent, UUID orderId) {
@@ -97,7 +103,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     }
 
     private StateMachine<OrderState, OrderEvent> build(BeerOrder beerOrder) {
-        StateMachine<OrderState, OrderEvent> sm = factory.getStateMachine(beerOrder.getId());
+        StateMachine<OrderState, OrderEvent> sm = factory.getStateMachine(beerOrder.getId().toString());
         sm.stop(); // stopping to reset the state
 
         sm.getStateMachineAccessor() //reseting the state to match state in db
