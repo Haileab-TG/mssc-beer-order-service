@@ -72,22 +72,41 @@ public class BeerOrderMangerImplIT {
         await().untilAsserted(() -> {
             BeerOrder beerOrderFound = beerOrderRepository.findById(allocatedBeerOrder.getId())
                     .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
-            assertEquals(beerOrderFound.getOrderState(), OrderState.ALLOCATED);
+            assertEquals(OrderState.ALLOCATED, beerOrderFound.getOrderState());
         });
 
         await().untilAsserted(()->{
             BeerOrder beerOrderFound = beerOrderRepository.findById(allocatedBeerOrder.getId())
                     .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
             beerOrderFound.getBeerOrderLines().forEach((line) ->{
-                assertEquals(line.getQuantityAllocated(), line.getOrderQuantity());
+                assertEquals(line.getOrderQuantity(), line.getQuantityAllocated());
             });
         });
 
         assertNotNull(allocatedBeerOrder);
         assertEquals(OrderState.ALLOCATED, allocatedBeerOrder.getOrderState());
         allocatedBeerOrder.getBeerOrderLines().forEach(line -> {
-            assertEquals(line.getQuantityAllocated(), line.getOrderQuantity());
+            assertEquals(line.getOrderQuantity(), line.getQuantityAllocated());
         });
+
+    }
+
+    @Test
+    public void testAllocatedToPickedUp() throws JsonProcessingException {
+        BeerOrder beerOrder = createBeerOrder();
+        beerOrder.setOrderState(OrderState.ALLOCATED);
+
+        BeerOrder savedBeerOrder = beerOrderRepository.save(beerOrder);
+
+        BeerOrder pickedUpOrder = beerOrderManager.pickUpBeerOrder(savedBeerOrder.getId());
+
+//        await().untilAsserted(() ->{
+//            assertNotNull(pickedUpOrder);
+//            assertEquals(pickedUpOrder.getOrderState(), OrderState.PICKED_UP);
+//        });
+
+        assertNotNull(pickedUpOrder);
+        assertEquals(pickedUpOrder.getOrderState(), OrderState.PICKED_UP);
 
     }
 
