@@ -23,7 +23,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
@@ -70,15 +69,29 @@ public class BeerOrderMangerImplIT {
 
         BeerOrder allocatedBeerOrder = beerOrderManager.newBeerOrder(createBeerOrder());
 
-        await().timeout(10, TimeUnit.SECONDS).until(() -> {
-            BeerOrder beerOrderFound = beerOrderRepository.findById(allocatedBeerOrder.getId()).get();
-            return beerOrderFound.getOrderState() == OrderState.PENDING_ALLOCATION;
+        await().untilAsserted(() -> {
+            BeerOrder beerOrderFound = beerOrderRepository.findById(allocatedBeerOrder.getId())
+                    .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+            assertEquals(beerOrderFound.getOrderState(), OrderState.ALLOCATED);
+        });
+
+        await().untilAsserted(()->{
+            BeerOrder beerOrderFound = beerOrderRepository.findById(allocatedBeerOrder.getId())
+                    .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+            beerOrderFound.getBeerOrderLines().forEach((line) ->{
+                assertEquals(line.getQuantityAllocated(), line.getOrderQuantity());
+            });
         });
 
         assertNotNull(allocatedBeerOrder);
         assertEquals(OrderState.ALLOCATED, allocatedBeerOrder.getOrderState());
+        allocatedBeerOrder.getBeerOrderLines().forEach(line -> {
+            assertEquals(line.getQuantityAllocated(), line.getOrderQuantity());
+        });
 
     }
+
+
 
     private BeerOrder createBeerOrder(){
        BeerOrder beerOrder =  BeerOrder.builder()
