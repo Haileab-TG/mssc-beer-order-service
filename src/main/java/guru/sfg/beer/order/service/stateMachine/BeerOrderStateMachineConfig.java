@@ -2,6 +2,7 @@ package guru.sfg.beer.order.service.stateMachine;
 
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
+import guru.sfg.beer.order.service.stateMachine.action.FailedAllocationCompensationAction;
 import guru.sfg.beer.order.service.stateMachine.action.FailedValidationCompensationAction;
 import guru.sfg.beer.order.service.stateMachine.action.SendAllocateOrderRequestAction;
 import guru.sfg.beer.order.service.stateMachine.action.SendValidateOrderRequestAction;
@@ -21,6 +22,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
     private final SendValidateOrderRequestAction sendValidateOrderRequestAction;
     private final SendAllocateOrderRequestAction sendAllocateOrderRequestAction;
     private final FailedValidationCompensationAction failedValidationCompensationAction;
+    private final FailedAllocationCompensationAction failedAllocationCompensationAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
@@ -78,6 +80,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                     .source(OrderState.PENDING_ALLOCATION)
                     .target(OrderState.ALLOCATION_EXCEPTION)
                     .event(OrderEvent.ALLOCATION_FAILED)
+                    .action(failedAllocationCompensationAction)
                 .and()
 
                 .withExternal()

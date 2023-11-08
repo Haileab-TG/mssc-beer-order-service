@@ -38,7 +38,7 @@ public class SendAllocateOrderRequestAction implements Action<OrderState, OrderE
                                     .ifPresentOrElse(beerOrder -> {
                                         System.out.println("############### 3 ##############");
                                         jmsClient.convertAndSend(
-                                                JmsConfig.ALLOCATE_ORDER_REQUEST_QUEUE,
+                                                JmsConfig.ALLOCATE_ORDER_REQ_QUEUE,
                                                 AllocateOrderRequestEvent.builder()
                                                         .beerOrderDto(
                                                                 beerOrderMapper.beerOrderToDto(beerOrder)

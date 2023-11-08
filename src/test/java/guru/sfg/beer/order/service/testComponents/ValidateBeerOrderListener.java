@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class ValidateBeerOrderListener {
     private final JmsTemplate jmsClient;
 
-    @JmsListener(destination = JmsConfig.VALIDATE_ORDER_REQUEST_QUEUE)
+    @JmsListener(destination = JmsConfig.VALIDATE_ORDER_REQ_QUEUE)
     public void listener(ValidateOrderRequestEvent event){
         String failedValidationTestFlag = event.getBeerOrderDto().getCustomerRef();
         boolean isValid = failedValidationTestFlag == null ||
@@ -26,6 +26,6 @@ public class ValidateBeerOrderListener {
                 .orderId(event.getBeerOrderDto().getId())
                 .build();
 
-        jmsClient.convertAndSend(JmsConfig.VALIDATE_ORDER_RESPONSE_QUEUE, response);
+        jmsClient.convertAndSend(JmsConfig.VALIDATE_ORDER_RES_QUEUE, response);
     }
 }

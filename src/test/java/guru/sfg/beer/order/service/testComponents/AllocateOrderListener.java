@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class AllocateOrderListener {
     private final JmsTemplate jmsTemplate;
 
-    @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_REQUEST_QUEUE)
+    @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_REQ_QUEUE)
     public void listner(AllocateOrderResultEvent event){
         BeerOrderDto beerOrderDto = event.getBeerOrderDto();
 
@@ -33,7 +33,7 @@ public class AllocateOrderListener {
 
 
         jmsTemplate.convertAndSend(
-                JmsConfig.ALLOCATE_ORDER_RESPONSE_QUEUE,
+                JmsConfig.ALLOCATE_ORDER_RES_QUEUE,
                 AllocateOrderResultEvent.builder()
                         .allocationError(allocationError)
                         .pendingInventory(pendingInventory)

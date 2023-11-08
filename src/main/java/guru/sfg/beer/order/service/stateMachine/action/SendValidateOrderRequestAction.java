@@ -33,7 +33,7 @@ public class SendValidateOrderRequestAction implements Action<OrderState, OrderE
                             .ifPresentOrElse(beerOrder -> {
                                 System.out.println("Trying to send Validate request to MQ");
                                 jmsClient.convertAndSend(
-                                        JmsConfig.VALIDATE_ORDER_REQUEST_QUEUE,
+                                        JmsConfig.VALIDATE_ORDER_REQ_QUEUE,
                                         new ValidateOrderRequestEvent(beerOrderMapper.beerOrderToDto(beerOrder))
                                 );
                                 System.out.println("Successfully sent Validate request to MQ");

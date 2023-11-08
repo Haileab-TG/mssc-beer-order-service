@@ -6,8 +6,10 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.maciejwalkowiak.wiremock.spring.ConfigureWireMock;
 import com.maciejwalkowiak.wiremock.spring.EnableWireMock;
 import com.maciejwalkowiak.wiremock.spring.InjectWireMock;
+import common.event.FailedAllocationCompenReqEvent;
 import guru.sfg.beer.order.service.RESTclient.beerService.BeerServiceRestTemplateImpl;
 import guru.sfg.beer.order.service.RESTclient.beerService.model.BeerDTO;
+import guru.sfg.beer.order.service.config.JmsConfig;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
 import guru.sfg.beer.order.service.domain.Customer;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jms.core.JmsTemplate;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,6 +29,7 @@ import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -45,6 +49,8 @@ public class BeerOrderMangerImplIT {
     WireMockServer wireMockServer;
     @Autowired
     ObjectMapper objectMapper;
+    @Autowired
+    JmsTemplate jmsClient;
     Customer customer;
     UUID beerId = UUID.randomUUID();
 
@@ -158,8 +164,17 @@ public class BeerOrderMangerImplIT {
             assertEquals(OrderState.ALLOCATION_EXCEPTION, beerOrderFound.getOrderState());
         });
 
+        FailedAllocationCompenReqEvent failedAllocationCompenReqEvent =
+                (FailedAllocationCompenReqEvent) jmsClient
+                .receiveAndConvert(JmsConfig.FAILED_ALLOCATION_COMPEN_REQ_QUEUE);
+
+
         assertNotNull(failedAllocationOrder);
         assertEquals(OrderState.ALLOCATION_EXCEPTION, failedAllocationOrder.getOrderState());
+
+        assertNotNull(failedAllocationCompenReqEvent);
+        assertThat(failedAllocationCompenReqEvent.getBeerOrderId())
+                .isEqualTo(failedAllocationOrder.getId());
     }
 
 

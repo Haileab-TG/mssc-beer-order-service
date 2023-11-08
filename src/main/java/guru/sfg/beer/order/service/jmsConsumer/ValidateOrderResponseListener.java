@@ -16,7 +16,7 @@ public class ValidateOrderResponseListener {
     private final BeerOrderManager beerOrderManager;
     int count = 0;
 
-    @JmsListener(destination = JmsConfig.VALIDATE_ORDER_RESPONSE_QUEUE)
+    @JmsListener(destination = JmsConfig.VALIDATE_ORDER_RES_QUEUE)
     public void listener(ValidateOrderResultEvent event){
         UUID beerOrderId = event.getOrderId();
         boolean isValid = event.isValid();

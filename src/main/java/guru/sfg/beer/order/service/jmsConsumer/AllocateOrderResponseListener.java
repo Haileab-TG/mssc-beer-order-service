@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class AllocateOrderResponseListener {
     private final BeerOrderManager beerOrderManager;
 
-    @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_RESPONSE_QUEUE)
+    @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_RES_QUEUE)
     public void listener(AllocateOrderResultEvent event){
         beerOrderManager.processAllocationResult(
                 event.getBeerOrderDto(),
