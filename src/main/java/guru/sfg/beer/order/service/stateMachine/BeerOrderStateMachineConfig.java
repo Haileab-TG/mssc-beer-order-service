@@ -47,6 +47,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                     .event(OrderEvent.VALIDATE_ORDER)
                     .action(sendValidateOrderRequestAction)
                 .and()
+
                 .withExternal()
                     .source(OrderState.PENDING_VALIDATION)
                     .target(OrderState.VALIDATED)
@@ -58,6 +59,11 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                     .event(OrderEvent.VALIDATION_FAILED)
                     .action(failedValidationCompensationAction)
                 .and()
+                .withExternal()
+                    .source(OrderState.PENDING_VALIDATION)
+                    .target(OrderState.CANCELLED)
+                    .event(OrderEvent.CANCEL_ORDER)
+                .and()
 
 
                 .withExternal()
@@ -66,6 +72,8 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                     .event(OrderEvent.ALLOCATE_ORDER)
                     .action(sendAllocateOrderRequestAction)
                 .and()
+
+
                 .withExternal()
                     .source(OrderState.PENDING_ALLOCATION)
                     .target(OrderState.ALLOCATED)
@@ -82,11 +90,21 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                     .event(OrderEvent.ALLOCATION_FAILED)
                     .action(failedAllocationCompensationAction)
                 .and()
+                .withExternal()
+                    .source(OrderState.PENDING_ALLOCATION)
+                    .target(OrderState.CANCELLED)
+                    .event(OrderEvent.CANCEL_ORDER)
+                .and()
 
                 .withExternal()
                     .source(OrderState.ALLOCATED)
                     .target(OrderState.PICKED_UP)
-                    .event(OrderEvent.ORDER_PICKED_UP);
+                    .event(OrderEvent.ORDER_PICKED_UP)
+                .and()
+                .withExternal()
+                    .source(OrderState.ALLOCATED)
+                    .target(OrderState.CANCELLED)
+                    .event(OrderEvent.CANCEL_ORDER);
 //                .and()
 //                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERY_EXCEPTION).event(OrderEvent.)
 //                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERED).event(OrderEvent.)
