@@ -136,6 +136,59 @@ public class BeerOrderMangerImplIT {
         assertEquals(OrderState.VALIDATION_EXCEPTION, failedValidationOrder.getOrderState());
     }
 
+    @Test
+    public void testFailedAllocation() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
+                .upc("1234")
+                .build();
+        wireMockServer.stubFor(
+                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                        .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
+        );
+
+        BeerOrder newBeerOrder = createBeerOrder();
+        newBeerOrder.setCustomerRef("test-failed-allocation"); // flag MQ that should fail
+
+        BeerOrder failedAllocationOrder = beerOrderManager.newBeerOrder(newBeerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder beerOrderFound = beerOrderRepository.findById(failedAllocationOrder.getId())
+                    .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+            assertEquals(OrderState.ALLOCATION_EXCEPTION, beerOrderFound.getOrderState());
+        });
+
+        assertNotNull(failedAllocationOrder);
+        assertEquals(OrderState.ALLOCATION_EXCEPTION, failedAllocationOrder.getOrderState());
+    }
+
+
+    @Test
+    public void testPartialAllocation() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
+                .upc("1234")
+                .build();
+        wireMockServer.stubFor(
+                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                        .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
+        );
+
+        BeerOrder newBeerOrder = createBeerOrder();
+        newBeerOrder.setCustomerRef("test-partial-allocation"); // flag MQ that should fail
+
+        BeerOrder failedPartialOrder = beerOrderManager.newBeerOrder(newBeerOrder);
+
+        await().untilAsserted(() -> {
+            BeerOrder beerOrderFound = beerOrderRepository.findById(failedPartialOrder.getId())
+                    .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+            assertEquals(OrderState.PENDING_INVENTORY, beerOrderFound.getOrderState());
+        });
+
+        assertNotNull(failedPartialOrder);
+        assertEquals(OrderState.PENDING_INVENTORY, failedPartialOrder.getOrderState());
+    }
+
 
 
     private BeerOrder createBeerOrder(){

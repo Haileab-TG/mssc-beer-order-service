@@ -18,14 +18,25 @@ public class AllocateOrderListener {
     @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_REQUEST_QUEUE)
     public void listner(AllocateOrderResultEvent event){
         BeerOrderDto beerOrderDto = event.getBeerOrderDto();
+
+        String failedAllocationTestFlag = beerOrderDto.getCustomerRef();
+        boolean allocationError = failedAllocationTestFlag != null &&
+                failedAllocationTestFlag.equals("test-failed-allocation");
+
+        String failedPartialTestFlag = beerOrderDto.getCustomerRef();
+        boolean pendingInventory = failedPartialTestFlag != null &&
+                failedPartialTestFlag.equals("test-partial-allocation");
+
         beerOrderDto.getBeerOrderLines().forEach(  //mocking full allocation
                 line -> line.setQuantityAllocated(line.getOrderQuantity())
         );
+
+
         jmsTemplate.convertAndSend(
                 JmsConfig.ALLOCATE_ORDER_RESPONSE_QUEUE,
                 AllocateOrderResultEvent.builder()
-                        .allocationError(false)
-                        .pendingInventory(false)
+                        .allocationError(allocationError)
+                        .pendingInventory(pendingInventory)
                         .beerOrderDto(beerOrderDto)
                         .build()
                 );
