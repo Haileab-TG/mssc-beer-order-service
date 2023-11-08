@@ -2,10 +2,7 @@ package guru.sfg.beer.order.service.stateMachine;
 
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
-import guru.sfg.beer.order.service.stateMachine.action.FailedAllocationCompensationAction;
-import guru.sfg.beer.order.service.stateMachine.action.FailedValidationCompensationAction;
-import guru.sfg.beer.order.service.stateMachine.action.SendAllocateOrderRequestAction;
-import guru.sfg.beer.order.service.stateMachine.action.SendValidateOrderRequestAction;
+import guru.sfg.beer.order.service.stateMachine.action.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
@@ -23,6 +20,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
     private final SendAllocateOrderRequestAction sendAllocateOrderRequestAction;
     private final FailedValidationCompensationAction failedValidationCompensationAction;
     private final FailedAllocationCompensationAction failedAllocationCompensationAction;
+    private final SendDeallocateCancelledOrderReqAction sendDeallocateCancelledOrderReqAction;
 
     @Override
     public void configure(StateMachineStateConfigurer<OrderState, OrderEvent> states) throws Exception {
@@ -104,7 +102,8 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
                 .withExternal()
                     .source(OrderState.ALLOCATED)
                     .target(OrderState.CANCELLED)
-                    .event(OrderEvent.CANCEL_ORDER);
+                    .event(OrderEvent.CANCEL_ORDER)
+                    .action(sendDeallocateCancelledOrderReqAction);
 //                .and()
 //                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERY_EXCEPTION).event(OrderEvent.)
 //                .withExternal().source(OrderState.ALLOCATED).target(OrderState.DELIVERED).event(OrderEvent.)
