@@ -1,5 +1,9 @@
 package guru.sfg.beer.order.service.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.annotation.EnableJms;
@@ -9,7 +13,9 @@ import org.springframework.jms.support.converter.MessageType;
 
 @EnableJms
 @Configuration
+@RequiredArgsConstructor
 public class JmsConfig {
+    private final ObjectMapper objectMapper;
     public static final String VALIDATE_ORDER_REQ_QUEUE = "validate-order-request";
     public static final String VALIDATE_ORDER_RES_QUEUE = "validate-order-response";
     public static final String ALLOCATE_ORDER_REQ_QUEUE = "allocate-order-request";
@@ -22,6 +28,9 @@ public class JmsConfig {
         MappingJackson2MessageConverter messageConverter = new MappingJackson2MessageConverter();
         messageConverter.setTargetType(MessageType.TEXT);
         messageConverter.setTypeIdPropertyName("_type");
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        messageConverter.setObjectMapper(objectMapper);
         return messageConverter;
     }
 }

@@ -16,7 +16,6 @@
  */
 package guru.sfg.beer.order.service.domain;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import lombok.Builder;

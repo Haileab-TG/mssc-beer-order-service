@@ -1,20 +1,18 @@
 package common.event;
 
 import common.model.BeerOrderDto;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class AllocateOrderResultEvent extends BeerOrderEvent{
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class AllocateOrderResultEvent{
+    private BeerOrderDto beerOrderDto;
     private boolean pendingInventory;
     private boolean allocationError;
 
-    @Builder
-    public AllocateOrderResultEvent(BeerOrderDto beerOrderDto, boolean pendingInventory,
-                                    boolean allocationError
-    ) {
-        super(beerOrderDto);
-        this.pendingInventory = pendingInventory;
-        this.allocationError = allocationError;
-    }
 }

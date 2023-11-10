@@ -35,6 +35,7 @@ public class SendDeallocateCancelledOrderReqAction implements Action<OrderState,
                     beerOrderRepository.findById(orderId)
                         .ifPresentOrElse(
                             beerOrder -> {
+                                System.out.println("Trying deallocate MQ.....");
                                 jmsClient.convertAndSend(
                                     JmsConfig.CANCELLED_ORDER_DEALLOCATE_REQ_QUEUE,
                                     DeallocateCancelledOrderReqEvent.builder()

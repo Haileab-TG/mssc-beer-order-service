@@ -1,5 +1,6 @@
 package guru.sfg.beer.order.service.testComponents;
 
+import common.event.AllocateOrderRequestEvent;
 import common.event.AllocateOrderResultEvent;
 import common.model.BeerOrderDto;
 import guru.sfg.beer.order.service.config.JmsConfig;
@@ -16,7 +17,7 @@ public class AllocateOrderListener {
     private final JmsTemplate jmsTemplate;
 
     @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_REQ_QUEUE)
-    public void listner(AllocateOrderResultEvent event){
+    public void listner(AllocateOrderRequestEvent event){
         BeerOrderDto beerOrderDto = event.getBeerOrderDto();
 
         String failedAllocationTestFlag = beerOrderDto.getCustomerRef();

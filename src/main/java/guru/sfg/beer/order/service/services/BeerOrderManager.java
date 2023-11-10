@@ -12,4 +12,6 @@ public interface BeerOrderManager {
     void processAllocationResult(BeerOrderDto beerOrderDto, boolean pendingInventory, boolean allocationError);
 
     BeerOrder pickUpBeerOrder(UUID beerOrderId);
+
+    BeerOrder cancelBeerOrder(UUID beerOrderId);
 }

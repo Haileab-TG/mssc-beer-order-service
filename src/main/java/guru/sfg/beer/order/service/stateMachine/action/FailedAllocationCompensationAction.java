@@ -31,5 +31,6 @@ public class FailedAllocationCompensationAction implements Action<OrderState, Or
                         )
                         .build()
         );
+        log.debug("FailedAllocationCompensationAction : mq compensation message sent");
     }
 }

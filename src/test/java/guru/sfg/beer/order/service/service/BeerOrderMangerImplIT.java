@@ -6,10 +6,10 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.maciejwalkowiak.wiremock.spring.ConfigureWireMock;
 import com.maciejwalkowiak.wiremock.spring.EnableWireMock;
 import com.maciejwalkowiak.wiremock.spring.InjectWireMock;
+import common.event.DeallocateCancelledOrderReqEvent;
 import common.event.FailedAllocationCompenReqEvent;
 import guru.sfg.beer.order.service.RESTclient.beerService.BeerServiceRestTemplateImpl;
 import guru.sfg.beer.order.service.RESTclient.beerService.model.BeerDTO;
-import guru.sfg.beer.order.service.config.JmsConfig;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
 import guru.sfg.beer.order.service.domain.Customer;
@@ -17,6 +17,9 @@ import guru.sfg.beer.order.service.domain.OrderState;
 import guru.sfg.beer.order.service.repositories.BeerOrderRepository;
 import guru.sfg.beer.order.service.repositories.CustomerRepository;
 import guru.sfg.beer.order.service.services.BeerOrderManager;
+import guru.sfg.beer.order.service.testComponents.ConfirmFailedAllocationCompenEventSent;
+import guru.sfg.beer.order.service.testComponents.ConfirmSentDeallocateCancellOrderReqEvevnt;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +37,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@Slf4j
 @EnableWireMock(
         @ConfigureWireMock(name = "beer-service", port = 8084)
 )
@@ -51,8 +55,14 @@ public class BeerOrderMangerImplIT {
     ObjectMapper objectMapper;
     @Autowired
     JmsTemplate jmsClient;
+    @Autowired
+    ConfirmFailedAllocationCompenEventSent confirmFailedAllocationCompenEventSent;
+    @Autowired
+    ConfirmSentDeallocateCancellOrderReqEvevnt sentDeallocateCancellOrderReqEvevnt;
+
+
+
     Customer customer;
-    UUID beerId = UUID.randomUUID();
 
 
     @BeforeEach
@@ -63,9 +73,8 @@ public class BeerOrderMangerImplIT {
         customerRepository.save(customer);
     }
     @Test
-    public void testNewOrderToAllocate() throws JsonProcessingException, InterruptedException {
+    public void testNewOrderToAllocate() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
-                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -90,8 +99,10 @@ public class BeerOrderMangerImplIT {
         });
 
         assertNotNull(allocatedBeerOrder);
-        assertEquals(OrderState.ALLOCATED, allocatedBeerOrder.getOrderState());
-        allocatedBeerOrder.getBeerOrderLines().forEach(line -> {
+        BeerOrder beerOrderFound = beerOrderRepository.findById(allocatedBeerOrder.getId())
+                .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+        assertEquals(OrderState.ALLOCATED, beerOrderFound.getOrderState());
+        beerOrderFound.getBeerOrderLines().forEach(line -> {
             assertEquals(line.getOrderQuantity(), line.getQuantityAllocated());
         });
 
@@ -106,11 +117,6 @@ public class BeerOrderMangerImplIT {
 
         BeerOrder pickedUpOrder = beerOrderManager.pickUpBeerOrder(savedBeerOrder.getId());
 
-//        await().untilAsserted(() ->{
-//            assertNotNull(pickedUpOrder);
-//            assertEquals(pickedUpOrder.getOrderState(), OrderState.PICKED_UP);
-//        });
-
         assertNotNull(pickedUpOrder);
         assertEquals(pickedUpOrder.getOrderState(), OrderState.PICKED_UP);
 
@@ -119,7 +125,6 @@ public class BeerOrderMangerImplIT {
     @Test
     public void testValidationFailed() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
-                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -139,13 +144,14 @@ public class BeerOrderMangerImplIT {
         });
 
         assertNotNull(failedValidationOrder);
-        assertEquals(OrderState.VALIDATION_EXCEPTION, failedValidationOrder.getOrderState());
+        BeerOrder updateBeerOrder = beerOrderRepository.findById(failedValidationOrder.getId())
+                        .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+        assertEquals(OrderState.VALIDATION_EXCEPTION, updateBeerOrder.getOrderState());
     }
 
     @Test
     public void testFailedAllocation() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
-                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -163,25 +169,28 @@ public class BeerOrderMangerImplIT {
                     .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
             assertEquals(OrderState.ALLOCATION_EXCEPTION, beerOrderFound.getOrderState());
         });
+        log.debug("BeerOrderMangerImplIT - testFailedAllocation : waiting for FailedAllocationCompenReqEvent " +
+                "to be availabe in the broker");
 
-        FailedAllocationCompenReqEvent failedAllocationCompenReqEvent =
-                (FailedAllocationCompenReqEvent) jmsClient
-                .receiveAndConvert(JmsConfig.FAILED_ALLOCATION_COMPEN_REQ_QUEUE);
-
-
+        await().untilAsserted(()->{
+            FailedAllocationCompenReqEvent failedAllocationCompenReqEvent =
+                    confirmFailedAllocationCompenEventSent.getFailedAllocationCompenReqEvent();
+            assertNotNull(failedAllocationCompenReqEvent);
+            assertThat(failedAllocationCompenReqEvent.getBeerOrderId())
+                    .isEqualTo(failedAllocationOrder.getId());
+        });
         assertNotNull(failedAllocationOrder);
-        assertEquals(OrderState.ALLOCATION_EXCEPTION, failedAllocationOrder.getOrderState());
+        BeerOrder updateBeerOrder = beerOrderRepository.findById(failedAllocationOrder.getId())
+                .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+        assertEquals(OrderState.ALLOCATION_EXCEPTION, updateBeerOrder.getOrderState());
 
-        assertNotNull(failedAllocationCompenReqEvent);
-        assertThat(failedAllocationCompenReqEvent.getBeerOrderId())
-                .isEqualTo(failedAllocationOrder.getId());
+
     }
 
 
     @Test
     public void testPartialAllocation() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
-                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -200,9 +209,88 @@ public class BeerOrderMangerImplIT {
             assertEquals(OrderState.PENDING_INVENTORY, beerOrderFound.getOrderState());
         });
 
-        assertNotNull(failedPartialOrder);
-        assertEquals(OrderState.PENDING_INVENTORY, failedPartialOrder.getOrderState());
+        BeerOrder updatedBeerOrder = beerOrderRepository.findById(failedPartialOrder.getId())
+                .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+        assertNotNull(updatedBeerOrder);
+        assertEquals(OrderState.PENDING_INVENTORY, updatedBeerOrder.getOrderState());
     }
+
+    @Test
+    public void testPendingValidationToCancelled() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder()
+                .upc("1234")
+                .build();
+        wireMockServer.stubFor(
+                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                        .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
+        );
+
+        BeerOrder beerToCancel = createBeerOrder();
+        beerToCancel.setOrderState(OrderState.PENDING_VALIDATION);
+        beerToCancel = beerOrderRepository.save(beerToCancel);
+
+        BeerOrder cancelledBeerOrder = beerOrderManager.cancelBeerOrder(beerToCancel.getId());
+
+        assertNotNull(cancelledBeerOrder);
+        assertEquals(OrderState.CANCELLED, cancelledBeerOrder.getOrderState());
+    }
+
+    @Test
+    public void testPendingAllocationToCancelled() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder()
+                .upc("1234")
+                .build();
+        wireMockServer.stubFor(
+                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                        .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
+        );
+
+        BeerOrder beerToCancel = createBeerOrder();
+        beerToCancel.setOrderState(OrderState.PENDING_ALLOCATION);
+        beerToCancel = beerOrderRepository.save(beerToCancel);
+
+        BeerOrder cancelledBeerOrder = beerOrderManager.cancelBeerOrder(beerToCancel.getId());
+
+        assertNotNull(cancelledBeerOrder);
+        assertEquals(OrderState.CANCELLED, cancelledBeerOrder.getOrderState());
+    }
+
+    @Test
+    public void testAllocatedToCancelled() throws JsonProcessingException {
+        BeerDTO beerDTO = BeerDTO.builder()
+                .upc("1234")
+                .build();
+        wireMockServer.stubFor(
+                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                        .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
+        );
+
+        BeerOrder beerToCancel = createBeerOrder();
+        beerToCancel.setOrderState(OrderState.ALLOCATED);
+        beerToCancel = beerOrderRepository.save(beerToCancel);
+
+        BeerOrder cancelledBeerOrder = beerOrderManager.cancelBeerOrder(beerToCancel.getId());
+
+        await().untilAsserted(() -> {
+            BeerOrder beerOrderFound = beerOrderRepository.findById(cancelledBeerOrder.getId())
+                    .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+            assertEquals(OrderState.CANCELLED, beerOrderFound.getOrderState());
+        });
+
+        BeerOrder updatedBeerOrder = beerOrderRepository.findById(cancelledBeerOrder.getId())
+                .orElseThrow(()->new RuntimeException("findById for beer order returned empty"));
+        assertNotNull(updatedBeerOrder);
+        assertEquals(OrderState.CANCELLED, updatedBeerOrder.getOrderState());
+
+        await().untilAsserted(()->{
+            DeallocateCancelledOrderReqEvent deallocateCancelledOrderReqEvent = sentDeallocateCancellOrderReqEvevnt.getDeallocateCancelledOrderReqEvent();
+            assertNotNull(deallocateCancelledOrderReqEvent);
+            assertThat(deallocateCancelledOrderReqEvent.getBeerOrderDto().getId())
+                    .isEqualTo(cancelledBeerOrder.getId());
+        });
+
+    }
+
 
 
 
@@ -212,7 +300,7 @@ public class BeerOrderMangerImplIT {
                 .build();
         Set<BeerOrderLine> lines = new HashSet<>();
         lines.add( BeerOrderLine.builder()
-                .beerId(beerId)
+                .beerId(UUID.randomUUID())
                 .upc("1234")
                 .orderQuantity(1)
                 .beerOrder(beerOrder)
@@ -220,4 +308,6 @@ public class BeerOrderMangerImplIT {
         beerOrder.setBeerOrderLines(lines);
         return beerOrder;
     }
+
+
 }

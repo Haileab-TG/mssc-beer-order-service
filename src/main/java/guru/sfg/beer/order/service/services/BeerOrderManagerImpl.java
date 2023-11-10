@@ -39,9 +39,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
         System.out.println("Beer Order ID saved " + beerOrder.getId());
         sendOrderEvent(savedBeerOrder, OrderEvent.VALIDATE_ORDER);
-
-        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrder.getId());
-        return beerOrderOptional.orElse(null);
+        return savedBeerOrder;
     }
 
     @Transactional
@@ -80,12 +78,23 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
     @Override
     public BeerOrder pickUpBeerOrder(UUID beerOrderId) {
         Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderId);
-        beerOrderOptional.ifPresentOrElse(beerOrderInDB -> {
-            sendOrderEvent(beerOrderInDB, OrderEvent.ORDER_PICKED_UP);
-        }, () -> log.error("BeerOrder findById is empty : pickUpBeerOrder - BeerOrderManagerImpl"));
+        beerOrderOptional.ifPresentOrElse(
+                beerOrderInDB -> sendOrderEvent(beerOrderInDB, OrderEvent.ORDER_PICKED_UP),
+                () -> log.error("BeerOrder findById is empty : pickUpBeerOrder - BeerOrderManagerImpl")
+        );
 
         beerOrderOptional = beerOrderRepository.findById(beerOrderId); //returning the newly updated one
         return beerOrderOptional.orElse(null);
+    }
+
+    @Override
+    public BeerOrder cancelBeerOrder(UUID beerOrderId) {
+        Optional<BeerOrder> beerOrderOptional = beerOrderRepository.findById(beerOrderId);
+        beerOrderOptional.ifPresentOrElse(
+                beerOrder -> sendOrderEvent(beerOrder, OrderEvent.CANCEL_ORDER),
+                () -> log.error("BeerOrder findById is empty : cancelBeerOrder - BeerOrderManagerImpl")
+        );
+        return beerOrderRepository.findById(beerOrderId).orElse(null);
     }
 
     private void updateOrderLineAllocatedQty(BeerOrderDto beerOrderDto) {

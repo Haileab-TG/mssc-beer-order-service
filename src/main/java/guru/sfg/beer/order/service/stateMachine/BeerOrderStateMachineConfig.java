@@ -31,6 +31,7 @@ public class BeerOrderStateMachineConfig extends StateMachineConfigurerAdapter<O
 
                 .end(OrderState.PICKED_UP)
                 .end(OrderState.DELIVERED)
+                .end(OrderState.CANCELLED)
                 .end(OrderState.VALIDATION_EXCEPTION)
                 .end(OrderState.ALLOCATION_EXCEPTION)
                 .end(OrderState.DELIVERY_EXCEPTION);

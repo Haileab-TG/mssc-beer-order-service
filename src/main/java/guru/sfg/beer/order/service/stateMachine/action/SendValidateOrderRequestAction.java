@@ -1,6 +1,7 @@
 package guru.sfg.beer.order.service.stateMachine.action;
 
 import common.event.ValidateOrderRequestEvent;
+import common.model.BeerOrderDto;
 import guru.sfg.beer.order.service.config.JmsConfig;
 import guru.sfg.beer.order.service.domain.OrderEvent;
 import guru.sfg.beer.order.service.domain.OrderState;
@@ -31,12 +32,12 @@ public class SendValidateOrderRequestAction implements Action<OrderState, OrderE
                 .ifPresentOrElse(orderId -> {
                     beerOrderRepository.findById(orderId)
                             .ifPresentOrElse(beerOrder -> {
-                                System.out.println("Trying to send Validate request to MQ");
                                 jmsClient.convertAndSend(
                                         JmsConfig.VALIDATE_ORDER_REQ_QUEUE,
-                                        new ValidateOrderRequestEvent(beerOrderMapper.beerOrderToDto(beerOrder))
+                                        ValidateOrderRequestEvent.builder()
+                                                .beerOrderDto(beerOrderMapper.beerOrderToDto(beerOrder))
+                                                .build()
                                 );
-                                System.out.println("Successfully sent Validate request to MQ");
                                 log.debug("SendValidateOrderRequestAction: Validate order request sent for " + beerOrder);
                             }, () -> log.error("SendValidateOrderRequestAction : BeerOrder with this ID not found in DB"));
                 }, () -> log.error("SendValidateOrderRequestAction : orderId not found in the message header"));
