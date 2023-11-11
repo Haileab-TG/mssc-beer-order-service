@@ -37,7 +37,7 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         beerOrder.setId(null); // just making user the db is initilizing id
         beerOrder.setOrderState(OrderState.NEW);
         BeerOrder savedBeerOrder = beerOrderRepository.saveAndFlush(beerOrder);
-        System.out.println("Beer Order ID saved " + beerOrder.getId());
+        log.debug("BeerOrderManagerImpl - newBeerOrder : Beer order saved SUCCESS in DB with ID " + savedBeerOrder.getId());
         sendOrderEvent(savedBeerOrder, OrderEvent.VALIDATE_ORDER);
         return savedBeerOrder;
     }
@@ -136,4 +136,37 @@ public class BeerOrderManagerImpl implements BeerOrderManager {
         sm.start();
         return sm;
     }
+//
+//    private void awaitForStatus(UUID beerOrderId, OrderState statusEnum) {
+//
+//        AtomicBoolean found = new AtomicBoolean(false);
+//        AtomicInteger loopCount = new AtomicInteger(0);
+//
+//        while (!found.get()) {
+//            if (loopCount.incrementAndGet() > 10) {
+//                found.set(true);
+//                log.debug("Loop Retries exceeded");
+//            }
+//
+//            beerOrderRepository.findById(beerOrderId).ifPresentOrElse(beerOrder -> {
+//                if (beerOrder.getOrderState().equals(statusEnum)) {
+//                    found.set(true);
+//                    log.debug("Order Found");
+//                } else {
+//                    log.debug("Order Status Not Equal. Expected: " + statusEnum.name() + " Found: " + beerOrder.getOrderState().name());
+//                }
+//            }, () -> {
+//                log.debug("Order Id Not Found");
+//            });
+//
+//            if (!found.get()) {
+//                try {
+//                    log.debug("Sleeping for retry");
+//                    Thread.sleep(100);
+//                } catch (Exception e) {
+//                    // do nothing
+//                }
+//            }
+//        }
+//    }
 }

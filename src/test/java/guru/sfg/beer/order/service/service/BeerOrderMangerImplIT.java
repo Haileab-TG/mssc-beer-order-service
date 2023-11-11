@@ -63,6 +63,7 @@ public class BeerOrderMangerImplIT {
 
 
     Customer customer;
+    UUID beerId;
 
 
     @BeforeEach
@@ -71,11 +72,13 @@ public class BeerOrderMangerImplIT {
                 .customerName("Test Customer")
                 .build();
         customerRepository.save(customer);
+        beerId = UUID.randomUUID();
     }
     @Test
     public void testNewOrderToAllocate() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
                 .upc("1234")
+                .id(beerId)
                 .build();
         wireMockServer.stubFor(
                 get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
@@ -126,6 +129,7 @@ public class BeerOrderMangerImplIT {
     public void testValidationFailed() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
                 .upc("1234")
+                .id(beerId)
                 .build();
         wireMockServer.stubFor(
                 get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
@@ -152,6 +156,7 @@ public class BeerOrderMangerImplIT {
     @Test
     public void testFailedAllocation() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -191,6 +196,7 @@ public class BeerOrderMangerImplIT {
     @Test
     public void testPartialAllocation() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -218,6 +224,7 @@ public class BeerOrderMangerImplIT {
     @Test
     public void testPendingValidationToCancelled() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -238,6 +245,7 @@ public class BeerOrderMangerImplIT {
     @Test
     public void testPendingAllocationToCancelled() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -258,6 +266,7 @@ public class BeerOrderMangerImplIT {
     @Test
     public void testAllocatedToCancelled() throws JsonProcessingException {
         BeerDTO beerDTO = BeerDTO.builder()
+                .id(beerId)
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
@@ -300,7 +309,7 @@ public class BeerOrderMangerImplIT {
                 .build();
         Set<BeerOrderLine> lines = new HashSet<>();
         lines.add( BeerOrderLine.builder()
-                .beerId(UUID.randomUUID())
+                .beerId(beerId)
                 .upc("1234")
                 .orderQuantity(1)
                 .beerOrder(beerOrder)
