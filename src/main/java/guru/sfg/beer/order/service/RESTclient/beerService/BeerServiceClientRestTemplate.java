@@ -15,14 +15,14 @@ import java.util.UUID;
 @Slf4j
 @ConfigurationProperties(prefix = "htg.brewery")
 @Component
-public class BeerServiceRestTemplateImpl  implements BeerServiceRestTemplate{
+public class BeerServiceClientRestTemplate implements BeerServiceRestClient {
     public static final String BEER_SERVICE_GET_BY_UPC_PATH = "/api/v1/beer/beerByUpc/";
     public static final String BEER_SERVICE_GET_BY_ID_PATH = "/api/v1/beer";
     private String beerServiceHost;
     private final RestTemplate restTemplate;
 
     @Autowired
-    public BeerServiceRestTemplateImpl(RestTemplateBuilder restTemplateBuilder) {
+    public BeerServiceClientRestTemplate(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder.build();
     }
 
@@ -39,7 +39,7 @@ public class BeerServiceRestTemplateImpl  implements BeerServiceRestTemplate{
     public BeerDTO getBeerByUpc(String upc) {
         String url = beerServiceHost + BEER_SERVICE_GET_BY_UPC_PATH + upc;
         BeerDTO beerDTO = restTemplate.getForObject(url, BeerDTO.class);
-        log.debug("BeerServiceRestTemplateImpl : Get beer by UPC from BeerService was invoked and returned " + beerDTO);
+        log.debug("BeerServiceClientRestTemplate : Get beer by UPC from BeerService was invoked and returned " + beerDTO);
         return beerDTO;
     }
 

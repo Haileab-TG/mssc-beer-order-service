@@ -8,7 +8,7 @@ import com.maciejwalkowiak.wiremock.spring.EnableWireMock;
 import com.maciejwalkowiak.wiremock.spring.InjectWireMock;
 import common.event.DeallocateCancelledOrderReqEvent;
 import common.event.FailedAllocationCompenReqEvent;
-import guru.sfg.beer.order.service.RESTclient.beerService.BeerServiceRestTemplateImpl;
+import guru.sfg.beer.order.service.RESTclient.beerService.BeerServiceClientRestTemplate;
 import guru.sfg.beer.order.service.RESTclient.beerService.model.BeerDTO;
 import guru.sfg.beer.order.service.domain.BeerOrder;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
@@ -81,7 +81,7 @@ public class BeerOrderMangerImplIT {
                 .id(beerId)
                 .build();
         wireMockServer.stubFor(
-                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                get(BeerServiceClientRestTemplate.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
                         .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
         );
 
@@ -132,7 +132,7 @@ public class BeerOrderMangerImplIT {
                 .id(beerId)
                 .build();
         wireMockServer.stubFor(
-                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                get(BeerServiceClientRestTemplate.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
                         .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
         );
 
@@ -160,7 +160,7 @@ public class BeerOrderMangerImplIT {
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
-                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                get(BeerServiceClientRestTemplate.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
                         .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
         );
 
@@ -200,7 +200,7 @@ public class BeerOrderMangerImplIT {
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
-                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                get(BeerServiceClientRestTemplate.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
                         .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
         );
 
@@ -228,7 +228,7 @@ public class BeerOrderMangerImplIT {
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
-                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                get(BeerServiceClientRestTemplate.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
                         .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
         );
 
@@ -249,7 +249,7 @@ public class BeerOrderMangerImplIT {
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
-                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                get(BeerServiceClientRestTemplate.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
                         .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
         );
 
@@ -270,7 +270,7 @@ public class BeerOrderMangerImplIT {
                 .upc("1234")
                 .build();
         wireMockServer.stubFor(
-                get(BeerServiceRestTemplateImpl.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
+                get(BeerServiceClientRestTemplate.BEER_SERVICE_GET_BY_UPC_PATH + beerDTO.getUpc())
                         .willReturn(okJson(objectMapper.writeValueAsString(beerDTO)))
         );
 

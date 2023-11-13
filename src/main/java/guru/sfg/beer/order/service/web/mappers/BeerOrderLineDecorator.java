@@ -1,7 +1,7 @@
 package guru.sfg.beer.order.service.web.mappers;
 
 import common.model.BeerOrderLineDto;
-import guru.sfg.beer.order.service.RESTclient.beerService.BeerServiceRestTemplate;
+import guru.sfg.beer.order.service.RESTclient.beerService.BeerServiceRestClient;
 import guru.sfg.beer.order.service.RESTclient.beerService.model.BeerDTO;
 import guru.sfg.beer.order.service.domain.BeerOrderLine;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +12,12 @@ import org.springframework.stereotype.Component;
 @Component
 public abstract class BeerOrderLineDecorator implements BeerOrderLineMapper{
     private BeerOrderLineMapper beerOrderLineMapper;
-    private BeerServiceRestTemplate beerServiceRestTemplate;
+    private BeerServiceRestClient beerServiceRestClient;
 
     @Override
     public BeerOrderLineDto beerOrderLineToDto(BeerOrderLine line) {
         BeerOrderLineDto beerOrderLineDto = beerOrderLineMapper.beerOrderLineToDto(line);
-        BeerDTO beerDto = beerServiceRestTemplate.getBeerByUpc(beerOrderLineDto.getUpc());
+        BeerDTO beerDto = beerServiceRestClient.getBeerByUpc(beerOrderLineDto.getUpc());
         beerOrderLineDto.setBeerName(beerDto.getBeerName());
         beerOrderLineDto.setBeerId(beerDto.getId());
         return beerOrderLineDto;
@@ -34,7 +34,7 @@ public abstract class BeerOrderLineDecorator implements BeerOrderLineMapper{
     }
 
     @Autowired
-    public void setBeerServiceRestTemplate(BeerServiceRestTemplate beerServiceRestTemplate) {
-        this.beerServiceRestTemplate = beerServiceRestTemplate;
+    public void setBeerServiceRestTemplate(BeerServiceRestClient beerServiceRestClient) {
+        this.beerServiceRestClient = beerServiceRestClient;
     }
 }
